@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace iTrade.API.Controllers
@@ -15,30 +16,19 @@ namespace iTrade.API.Controllers
         {
             return new string[] { "value1", "value2" };
         }
-
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        [HttpGet("protected")]
+        public IEnumerable<string> Protected()
         {
-            return "value";
+            return new string[] { "Access granted as you are a logged in user !" };
         }
 
-        // POST api/values
-        [HttpPost]
-        public void Post([FromBody]string value)
+        [Authorize(AuthenticationSchemes = "Bearer", Roles = "Admin, ADMIN")]
+        [HttpGet("admin-protected")]
+        public IEnumerable<string> AdminProtected()
         {
-        }
-
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
-        {
-        }
-
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+            return new string[] { "Access granted as you are an admin !" };
         }
     }
 }

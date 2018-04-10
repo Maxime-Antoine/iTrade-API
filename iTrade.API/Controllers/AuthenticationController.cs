@@ -24,18 +24,15 @@ namespace iTrade.API.Controllers
         private readonly OpenIddictApplicationManager<OpenIddictApplication> _appManager;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly UserManager<AppUser> _userManager;
-        private readonly AppDbContext _db;
 
         public AuthenticationController(
             OpenIddictApplicationManager<OpenIddictApplication> applicationManager,
             SignInManager<AppUser> signInManager,
-            UserManager<AppUser> userManager,
-            AppDbContext db)
+            UserManager<AppUser> userManager)
         {
             _appManager = applicationManager;
             _signInManager = signInManager;
             _userManager = userManager;
-            _db = db;
         }
 
         [HttpPost("~/connect/token"), Produces("application/json")]
@@ -153,17 +150,16 @@ namespace iTrade.API.Controllers
             // whether they should be included in access tokens, in identity tokens or in both.
 
             //Add roles as claim
-            //var userWithRoles = _db.Users.Include("Roles").Single(u => u.UserName == user.UserName);
-            //if (userWithRoles.Roles.Any())
-            //{
-            //    var identity = principal.Identity as ClaimsIdentity;
-            //    var roleNames = _db.Roles.Where(r => userWithRoles.Roles.Select(ur => ur.RoleId).Contains(r.Id)).Select(r => r.Name).ToArray();
+            var roleNames = await _userManager.GetRolesAsync(user);
+            if (roleNames.Count > 0)
+            {
+                var identity = principal.Identity as ClaimsIdentity;
+                
+                foreach (var roleName in roleNames)
+                    identity.AddClaim("role", roleName, new string[] { OpenIdConnectConstants.Destinations.AccessToken, OpenIdConnectConstants.Destinations.IdentityToken });
 
-            //    foreach (var roleName in roleNames)
-            //        identity.AddClaim("role", roleName, new string[] { OpenIdConnectConstants.Destinations.AccessToken, OpenIdConnectConstants.Destinations.IdentityToken });
-
-            //    principal = new ClaimsPrincipal(identity);
-            //}
+                principal = new ClaimsPrincipal(identity);
+            }
 
             // Create a new authentication ticket holding the user identity.
             var ticket = new AuthenticationTicket(principal, properties,
