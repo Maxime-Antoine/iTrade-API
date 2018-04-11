@@ -1,12 +1,10 @@
 ﻿using AspNet.Security.OpenIdConnect.Extensions;
 using AspNet.Security.OpenIdConnect.Primitives;
 using AspNet.Security.OpenIdConnect.Server;
-using iTrade.API.Db;
 using iTrade.API.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using OpenIddict.Core;
 using OpenIddict.Models;
 using System.Diagnostics;
@@ -26,9 +24,7 @@ namespace iTrade.API.Controllers
         private readonly UserManager<AppUser> _userManager;
 
         public AuthenticationController(
-            OpenIddictApplicationManager<OpenIddictApplication> applicationManager,
-            SignInManager<AppUser> signInManager,
-            UserManager<AppUser> userManager)
+            OpenIddictApplicationManager<OpenIddictApplication> applicationManager, SignInManager<AppUser> signInManager, UserManager<AppUser> userManager)
         {
             _appManager = applicationManager;
             _signInManager = signInManager;
@@ -36,7 +32,7 @@ namespace iTrade.API.Controllers
         }
 
         [HttpPost("~/connect/token"), Produces("application/json")]
-        public async Task<IActionResult> Post(OpenIdConnectRequest req)
+        public async Task<IActionResult> Exchange(OpenIdConnectRequest req)
         {
             Debug.Assert(req.IsTokenRequest(),
                 "The OpenIddict binder for ASP.NET Core MVC is not registered. " +
@@ -137,9 +133,7 @@ namespace iTrade.API.Controllers
                 });
         }
 
-        private async Task<AuthenticationTicket> _CreateTicketAsync(
-            OpenIdConnectRequest request, AppUser user,
-            AuthenticationProperties properties = null)
+        private async Task<AuthenticationTicket> _CreateTicketAsync(OpenIdConnectRequest request, AppUser user, AuthenticationProperties properties = null)
         {
             // Create a new ClaimsPrincipal containing the claims that
             // will be used to create an id_token, a token or a code.

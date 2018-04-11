@@ -66,7 +66,6 @@ namespace iTrade.API
                 options.AddEntityFrameworkCoreStores<AppDbContext>()
                         .AddMvcBinders()
                         .EnableTokenEndpoint("/connect/token")
-                        .EnableLogoutEndpoint("/connect/logout")
                         .AllowPasswordFlow()
                         .AllowRefreshTokenFlow();
 
