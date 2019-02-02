@@ -41,8 +41,7 @@ namespace iTrade.API
                 options.ClaimsIdentity.UserIdClaimType = OpenIdConnectConstants.Claims.Subject;
                 options.ClaimsIdentity.RoleClaimType = OpenIdConnectConstants.Claims.Role;
             });
-
-
+ 
             services.AddMvc();
 
             services.AddDbContext<AppDbContext>(options =>
@@ -96,10 +95,14 @@ namespace iTrade.API
             using (var serviceScope = app.ApplicationServices.CreateScope())
             {
                 var db = serviceScope.ServiceProvider.GetService<AppDbContext>();
-                db.Database.EnsureDeleted(); //DEBUG
+                //db.Database.EnsureDeleted(); //DEBUG
                 db.Database.EnsureCreated();
-                _SeedIdentityAsync(serviceScope.ServiceProvider).Wait();
-                _CreateOpendIddictClients(serviceScope.ServiceProvider).Wait();
+          
+                Task.WaitAll(new Task[] 
+                {
+                    _SeedIdentityAsync(serviceScope.ServiceProvider),
+                    _CreateOpendIddictClientsAsync(serviceScope.ServiceProvider)
+                });
             }
         }
 
@@ -144,7 +147,7 @@ namespace iTrade.API
             await db.SaveChangesAsync();
         }
 
-        private async Task _CreateOpendIddictClients(IServiceProvider serviceProvider)
+        private async Task _CreateOpendIddictClientsAsync(IServiceProvider serviceProvider)
         {
             var manager = serviceProvider.GetRequiredService<OpenIddictApplicationManager<OpenIddictApplication>>();
 
