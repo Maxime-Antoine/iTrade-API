@@ -5,8 +5,9 @@ using iTrade.API.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using OpenIddict.Abstractions;
 using OpenIddict.Core;
-using OpenIddict.Models;
+using OpenIddict.EntityFrameworkCore.Models;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
@@ -87,16 +88,12 @@ namespace iTrade.API.Controllers
                 // Create a new authentication ticket.
                 var ticket = await _CreateTicketAsync(req, user);
 
-                if (req.Resource != null)
-                    ticket.SetAudiences(new string[] { req.Resource });
-
                 return SignIn(ticket.Principal, ticket.Properties, ticket.AuthenticationScheme);
             }
             else if (req.IsRefreshTokenGrantType())
             {
                 // Retrieve the claims principal stored in the refresh token.
                 var info = await HttpContext.AuthenticateAsync(OpenIdConnectServerDefaults.AuthenticationScheme);
-                //var info = await HttpContext.Authentication.GetAuthenticateInfoAsync(OpenIdConnectServerDefaults.AuthenticationScheme);
 
                 // Retrieve the user profile corresponding to the refresh token.
                 var user = await _userManager.GetUserAsync(info.Principal);

@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenIddict.Abstractions;
+using OpenIddict.Core;
+using OpenIddict.EntityFrameworkCore.Models;
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -58,21 +61,25 @@ namespace iTrade.API
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
 
-            services.AddAuthentication()
-                .AddOAuthValidation();
+            services.AddOpenIddict()
+                    .AddCore(options =>
+                    {
+                        options.UseEntityFrameworkCore()
+                               .UseDbContext<AppDbContext>();
+                    })
+                    .AddServer(options =>
+                    {
+                        options.UseMvc();
 
-            services.AddOpenIddict(options =>
-            {
-                options.AddEntityFrameworkCoreStores<AppDbContext>()
-                        .AddMvcBinders()
-                        .EnableTokenEndpoint("/connect/token")
-                        .AllowPasswordFlow()
-                        .AllowRefreshTokenFlow();
+                        options.EnableTokenEndpoint("/connect/token")
+                            .AllowPasswordFlow()
+                            .AllowRefreshTokenFlow();
 
-                if (Environment.IsDevelopment())
-                    options.Configure(config => config.ApplicationCanDisplayErrors = true)
-                            .DisableHttpsRequirement();
-            });
+                        if (Environment.IsDevelopment())
+                            options.Configure(config => config.ApplicationCanDisplayErrors = true)
+                                    .DisableHttpsRequirement();
+                    })
+                    .AddValidation();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -92,6 +99,7 @@ namespace iTrade.API
                 db.Database.EnsureDeleted(); //DEBUG
                 db.Database.EnsureCreated();
                 _SeedIdentityAsync(serviceScope.ServiceProvider).Wait();
+                _CreateOpendIddictClients(serviceScope.ServiceProvider).Wait();
             }
         }
 
@@ -134,6 +142,28 @@ namespace iTrade.API
             }
 
             await db.SaveChangesAsync();
+        }
+
+        private async Task _CreateOpendIddictClients(IServiceProvider serviceProvider)
+        {
+            var manager = serviceProvider.GetRequiredService<OpenIddictApplicationManager<OpenIddictApplication>>();
+
+            if (await manager.FindByClientIdAsync("itrade-web") == null)
+            {
+                var descriptor = new OpenIddictApplicationDescriptor
+                {
+                    ClientId = "itrade-web",
+                    DisplayName = "iTrade web client",
+                    Permissions =
+                    {
+                        OpenIddictConstants.Permissions.Endpoints.Token,
+                        OpenIddictConstants.Permissions.GrantTypes.Password,
+                        OpenIddictConstants.Permissions.GrantTypes.RefreshToken
+                    }
+                };
+
+                await manager.CreateAsync(descriptor);
+            }
         }
     }
 }
