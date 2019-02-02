@@ -37,7 +37,7 @@ namespace iTrade.API.Controllers
         {
             Debug.Assert(req.IsTokenRequest(),
                 "The OpenIddict binder for ASP.NET Core MVC is not registered. " +
-                "Make sure services.AddOpenIddict().AddMvcBinders() is correctly called.");
+                "Make sure services.AddOpenIddict().AddServer(o => o.UseMvc()) is correctly called.");
 
             if (req.IsPasswordGrantType())
             {

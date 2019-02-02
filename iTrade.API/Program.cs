@@ -18,8 +18,10 @@ namespace iTrade.API
         }
 
         public static IWebHost BuildWebHost(string[] args) =>
+            CreateWebHostBuilder(args).Build();
+
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>()
-                .Build();
+                .UseStartup<Startup>();
     }
 }

@@ -48,14 +48,9 @@ namespace iTrade.API
             services.AddDbContext<AppDbContext>(options =>
             {
                 options.UseInMemoryDatabase("iTrade");
+                // options.UseSqlServer(Configuration["ConnectionStrings:Default"]);
                 options.UseOpenIddict();
             });
-
-            //services.AddDbContext<AppDbContext>(options =>
-            //{
-            //    options.UseSqlServer(Configuration["ConnectionStrings:Default"]);
-            //    options.UseOpenIddict();
-            //});
 
             services.AddIdentity<AppUser, IdentityRole>()
                 .AddEntityFrameworkStores<AppDbContext>()
@@ -74,7 +69,7 @@ namespace iTrade.API
                         options.EnableTokenEndpoint("/connect/token")
                             .AllowPasswordFlow()
                             .AllowRefreshTokenFlow();
-
+                        
                         if (Environment.IsDevelopment())
                             options.Configure(config => config.ApplicationCanDisplayErrors = true)
                                     .DisableHttpsRequirement();
@@ -108,13 +103,11 @@ namespace iTrade.API
             using (var serviceScope = app.ApplicationServices.CreateScope())
             {
                 var db = serviceScope.ServiceProvider.GetService<AppDbContext>();
+                db.Database.EnsureDeleted(); // DEBUG
                 db.Database.EnsureCreated();
-          
-                Task.WaitAll(new Task[] 
-                {
-                    _SeedIdentityAsync(serviceScope.ServiceProvider),
-                    _CreateOpendIddictClientsAsync(serviceScope.ServiceProvider)
-                });
+
+                _SeedIdentityAsync(serviceScope.ServiceProvider).Wait();
+                _CreateOpendIddictClientsAsync(serviceScope.ServiceProvider).Wait();
             }
         }
 
@@ -177,7 +170,8 @@ namespace iTrade.API
                     }
                 };
 
-                await manager.CreateAsync(descriptor);
+
+                var res = await manager.CreateAsync(descriptor);
             }
         }
     }
