@@ -108,7 +108,7 @@ namespace iTrade.API
             using (var serviceScope = app.ApplicationServices.CreateScope())
             {
                 var db = serviceScope.ServiceProvider.GetService<AppDbContext>();
-                db.Database.EnsureCreatedAsync().Wait();
+                db.Database.EnsureCreated();
           
                 Task.WaitAll(new Task[] 
                 {
