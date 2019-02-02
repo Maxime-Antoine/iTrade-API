@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.OpenApi.Models;
 using OpenIddict.Abstractions;
 using OpenIddict.Core;
 using OpenIddict.EntityFrameworkCore.Models;
@@ -41,7 +42,7 @@ namespace iTrade.API
                 options.ClaimsIdentity.UserIdClaimType = OpenIdConnectConstants.Claims.Subject;
                 options.ClaimsIdentity.RoleClaimType = OpenIdConnectConstants.Claims.Role;
             });
- 
+
             services.AddMvc();
 
             services.AddDbContext<AppDbContext>(options =>
@@ -79,6 +80,11 @@ namespace iTrade.API
                                     .DisableHttpsRequirement();
                     })
                     .AddValidation();
+
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "iTrade API", Version = "v1" });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -89,14 +95,20 @@ namespace iTrade.API
             if (env.IsDevelopment())
                 app.UseDeveloperExceptionPage();
 
+            app.UseSwagger();
+
+            app.UseSwaggerUI(options => 
+            {
+                options.SwaggerEndpoint("/swagger/v1/swagger.json", "iTrade API v1");
+            });
+
             app.UseMvc();
 
             //create & seed database
             using (var serviceScope = app.ApplicationServices.CreateScope())
             {
                 var db = serviceScope.ServiceProvider.GetService<AppDbContext>();
-                //db.Database.EnsureDeleted(); //DEBUG
-                db.Database.EnsureCreated();
+                db.Database.EnsureCreatedAsync().Wait();
           
                 Task.WaitAll(new Task[] 
                 {
